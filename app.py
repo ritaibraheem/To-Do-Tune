@@ -15,7 +15,7 @@ def color_df(val):
 	return f'background-color: {color}'
 
 st.set_page_config(
-    page_title="ToDo",
+    page_title="ToDo Tune",
     page_icon="📝",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -26,7 +26,7 @@ bottom_image = Image.open('static/banner_bottom.png')
 main_image = Image.open('static/main_banner.png')
 
 st.image(main_image,use_column_width='always')
-st.title("📄 ToDo App 🗣")
+st.title("📄 ToDo Tune")
 
 st.sidebar.image(top_image,use_column_width='auto')
 choice = st.sidebar.selectbox("Menu", ["Create Task ✅","Update Task 👨‍💻","Delete Task ❌", "View Tasks' Status 👨‍💻"])
@@ -122,4 +122,4 @@ else:
                                  'Doing':'orange'})
 		st.plotly_chart(p1,use_container_width=True)
 
-st.markdown("<br><hr><center>Made with ❤️ by <a href='mailto:ralhanprateek@gmail.com?subject=ToDo WebApp!&body=Please specify the issue you are facing with the app.'><strong>Prateek Ralhan</strong></a></center><hr>", unsafe_allow_html=True)
+st.markdown("<br><hr><center>Made with ❤️ by <strong>Bella & Rita</strong></center><hr>", unsafe_allow_html=True)
