@@ -100,7 +100,7 @@ bottom_image = Image.open('static/banner_bottom.png')
 st.title("📄 ToDo Tune")
 
 # st.sidebar.image(top_image,use_column_width='auto')
-choice = st.sidebar.selectbox("Menu", ["My Day 🎯","Create Task ✅","Update Task 🖊️","Delete Task ❌", "View Tasks' Status 👨‍💻"])
+choice = st.sidebar.selectbox("Menu", ["My Day 🎯","Create Task ✅","Update Task 🖊️","Delete Task ❌", "View Tasks' Status 📝"])
 st.sidebar.image(bottom_image,use_column_width='auto')
 create_table()
 
@@ -139,7 +139,7 @@ if choice == "My Day 🎯":
 	result = get_today_tasks(date.today())
 	# st.write(result)
 	result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'deadline_met'])
-	clean_df1= result_df[['title', 'tag', 'task_status', 'deadline_date']]
+	clean_df1= result_df[['title', 'tag', 'about', 'task_status', 'deadline_date']]
 
 	with st.expander("View Today's Tasks 📝"):
 		# result = view_all_data()
@@ -245,7 +245,7 @@ elif choice == "Delete Task ❌":
 		clean_df = pd.DataFrame(result,columns=["Task","Status","Date"])
 		st.dataframe(clean_df.style.applymap(color_df,subset=['Status']))
 
-elif choice == "View Tasks' Status 👨‍💻":
+elif choice == "View Tasks' Status 📝":
 	result = view_all_data()
 	# st.write(result)
 	result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'deadline_met'])
