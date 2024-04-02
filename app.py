@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 # from htbuilder import HtmlElement, div, ul, li, br, hr, a, p, img, styles, classes, fonts
 # from htbuilder.units import percent, px
 # from htbuilder.funcs import rgba, rgb
@@ -107,18 +107,53 @@ create_table()
 if choice == "My Day 🎯":
 	st.subheader("My Day 🎯")
 
-	result = get_today_tasks(datetime.now())
+	col_large1,col_large2 = st.columns(2,gap='medium')
+	
+	with col_large1:
+		st.text('How do you feel today?')
+		feeling = None
+
+		col1,col2,col3,col4,col5 = st.columns(5,gap='small')
+		with col1:
+			if st.button('😁'): #super happy
+				feeling = 5
+		with col2:
+			if st.button('🙂'): #happy
+				feeling = 4	
+		with col3:
+			if st.button('😐'): #neutral
+				feeling = 3
+		with col4:
+			if st.button('🙁'): #sad
+				feeling = 2
+		with col5:
+			if st.button('😭'): #super sad
+				feeling = 1
+
+		avg_mood_int=feeling
+
+	with col_large2:
+		avg_sleep_hours_int = st.slider('How many hours did you sleep at night?', 0.0, 24.0, 7.0)
+		st.write(avg_sleep_hours_int, ' hours.')	
+
+	result = get_today_tasks(date.today())
 	# st.write(result)
-	result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'deadline_met'])
-	clean_df= result_df[['title', 'task_status', 'deadline']]
-	# clean_df['hours left'] = 
+	result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'deadline_met'])
+	clean_df1= result_df[['title', 'tag', 'task_status', 'deadline_date']]
+
+	with st.expander("View Today's Tasks 📝"):
+		# result = view_all_data()
+		# # st.write(result)
+		# result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'deadline_met'])
+		# clean_df= result_df[['title', 'task_status', 'deadline']]
+		# clean_df['deadline'] = pd.to_datetime(clean_df['deadline'])
+		# clean_df['deadline']= clean_df['deadline'].dt.date
+		st.dataframe(clean_df1.style.applymap(color_df,subset=['task_status']))
 
 
-	clean_df['deadline'] = pd.to_datetime(clean_df['deadline'])
-	clean_df['deadline']= clean_df['deadline'].dt.date
 
-	task_df = clean_df['task_status'].value_counts().to_frame()
-	task_df = task_df.reset_index()
+
+
 
 if choice == "Create Task ✅":
 	st.subheader("Add New Task")
