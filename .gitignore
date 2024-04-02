@@ -3,6 +3,6 @@
 # dependencies
 /.ipynb_checkpoints
 
-# dependencies
 /__pycache__
 
+__pycache__/db_funcs.cpython-39.pyc
