@@ -6,7 +6,8 @@ import streamlit as st
 import pandas as pd 
 from db_funcs import *
 from PIL import Image
-import plotly.express as px 
+import plotly.express as px
+from model import *
 
 # def image(src_as_string, **style):
 #     return img(src=src_as_string, style=styles(**style))
@@ -107,7 +108,7 @@ create_table()
 if choice == "My Day 🎯":
 	st.subheader("My Day 🎯")
 
-	col_large1,col_large2 = st.columns(2,gap='medium')
+	col_large1,col_large2,col_large3 = st.columns(3,gap='medium')
 	
 	with col_large1:
 		st.text('How do you feel today?')
@@ -136,6 +137,11 @@ if choice == "My Day 🎯":
 		avg_sleep_hours_int = st.slider('How many hours did you sleep at night?', 0.0, 24.0, 7.0)
 		st.write(avg_sleep_hours_int, ' hours.')	
 
+	with col_large3:
+		agree = st.checkbox('I took medicine today.')
+		if agree:
+			medication_taken = True	
+
 	result = get_today_tasks(date.today())
 	# st.write(result)
 	result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'deadline_met'])
@@ -148,12 +154,13 @@ if choice == "My Day 🎯":
 		# clean_df= result_df[['title', 'task_status', 'deadline']]
 		# clean_df['deadline'] = pd.to_datetime(clean_df['deadline'])
 		# clean_df['deadline']= clean_df['deadline'].dt.date
+
+		st.text('Do now and live peacefully:')
+		if st.button('🔔'): #help me button
+			model_result = run_ml_model()
+			st.text(model_result) 
+		
 		st.dataframe(clean_df1.style.applymap(color_df,subset=['task_status']))
-
-
-
-
-
 
 if choice == "Create Task ✅":
 	st.subheader("Add New Task")
@@ -164,7 +171,6 @@ if choice == "Create Task ✅":
 		title = st.text_input("Title")
 		about = st.text_area("Description")
 		
-
 	with col2:
 		tag = st.selectbox("Category",["home", "bureaucracy", "studies", "work", "exercise", "fun", "health"])
 		deadline_date = st.date_input("Due Date")

@@ -42,3 +42,14 @@ def get_task_by_status(task_status):
 def delete_data(task):
     c.execute('DELETE FROM tasks WHERE title="{}"'.format(task))
     conn.commit()
+
+
+
+#  ****************************************************
+#  ML Model Functions   
+#  ****************************************************
+
+def get_all_ml_data(filename):
+    c.execute('SELECT * FROM '+ filename)
+    data = c.fetchall()
+    return data
