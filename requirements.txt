@@ -68,7 +68,7 @@ pyzmq==22.3.0
 requests==2.27.1
 Send2Trash==1.8.0
 six==1.16.0
-sklearn==2.2.0
+sklearn-pandas==2.2.0
 smmap==5.0.0
 streamlit==1.5.1
 streamlit_option_menu==0.3.12
