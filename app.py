@@ -1,4 +1,5 @@
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
+from dateutil.relativedelta import relativedelta
 import streamlit as st
 from streamlit_option_menu import option_menu
 import pandas as pd 
@@ -6,6 +7,8 @@ from db_funcs import *
 from PIL import Image
 import plotly.express as px
 from model import *
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 
 # *******************************************
@@ -33,7 +36,12 @@ st.image('TO DO Tune.svg',)
 
 with st.sidebar:
 	choice = option_menu("Menu", ["🎯 My Day","✅ Create Task","🖊️ Update Task","❌ Delete Task", "📝 All Tasks"], 
-									  icons=[' ', ' ',' ', ' ',' '], menu_icon=' ', default_index=0)
+									  icons=[' ', ' ',' ', ' ',' '], menu_icon=' ', default_index=0,
+									  styles={
+        "container": {"background-color": "#fafafa"},
+		"nav-link": {"text-align": "left", "margin":"0px", "--hover-color": "#eee", "font-weight": "normal"},
+        "nav-link-selected": {"background-color": "#d0d0d0"}
+    })
 
 create_table()
 
@@ -82,14 +90,13 @@ if choice == "🎯 My Day":
 		else:
 			medication_taken = False
 
-	result = get_today_tasks(date.today())
-	result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'is_late'])
-	clean_df1= result_df[['title', 'tag', 'about', 'task_status', 'deadline_date']]
-
 	tab1, tab2, tab3 = st.tabs(["Today's Tasks 📝", "   🔔   ", "Analysis"])
 
 	with tab1:
 		st.text('Do now and live peacefully:')
+		result = get_today_tasks(date.today())
+		result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'is_late'])
+		clean_df1= result_df[['title', 'tag', 'about', 'task_status', 'deadline_date']]
 		st.dataframe(clean_df1.style.applymap(color_df,subset=['task_status']))
 
 	with tab2:
@@ -98,10 +105,64 @@ if choice == "🎯 My Day":
 		st.text(model_result) 
 		
 	with tab3:
-		st.header("An owl")
-		st.image("https://static.streamlit.io/examples/owl.jpg", width=200)
+		st.header("Your Monthly Behavior")
 		
-		st.dataframe(clean_df1.style.applymap(color_df,subset=['task_status']))
+		result = view_all_data()
+		result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'is_late'])
+		
+		done_tasks = result_df[(result_df['task_status']=='Done')]
+		done_tasks['deadline_date']=pd.to_datetime(done_tasks['deadline_date']) 
+		done_tasks['end_time']=pd.to_datetime(done_tasks['end_time'])
+		done_tasks = done_tasks[['title','tag','deadline_date','end_time','is_late']]
+		done_tasks['is_late'] = done_tasks['is_late'].astype('int64')
+
+		late_done_tasks = done_tasks[(done_tasks['is_late']==1)]
+		on_time_done_tasks = done_tasks[(done_tasks['is_late']==0)]
+
+		
+		one_month_later = date.today() + relativedelta(months=2)
+
+		fig = make_subplots(rows=1, cols=2)
+
+		trace0 = go.Histogram(x=late_done_tasks['deadline_date'],
+							name='Lated Tasks',
+							xbins=dict(
+							start='2023-11-01',
+							end=str(one_month_later),
+							size= 'M1'), # 1 months
+							autobinx = False
+							)
+		# trace1 = go.Histogram(x=x, nbinsx = 8)
+		trace1 = go.Histogram(x=on_time_done_tasks['deadline_date'],
+							name='On-Time Tasks',
+							xbins=dict(
+							start='2023-11-01',
+							end=str(one_month_later),
+							size= 'M1'), # 1 months
+							autobinx = False
+							)
+
+		fig.append_trace(trace0, 1, 1)
+		fig.append_trace(trace1, 1, 2)
+
+		fig.update_layout(title = {"text": "Completed Tasks Distribution Over The Time","x": 0.4, })
+
+		st.plotly_chart(fig,use_container_width=True)
+
+		# late_done_tasks['deadline_month'] = late_done_tasks['deadline_date'].dt.month
+		# late_done_tasks['end_month'] = late_done_tasks['end_time'].dt.month
+		# late_done_tasks['deadline_year'] = late_done_tasks['deadline_date'].dt.year
+
+		# on_time_done_tasks['deadline_month'] = on_time_done_tasks['deadline_date'].dt.month
+		# on_time_done_tasks['end_month'] = on_time_done_tasks['end_time'].dt.month
+		# on_time_done_tasks['deadline_year'] = on_time_done_tasks['deadline_date'].dt.year
+
+		# on_time_done_tasks_gb = on_time_done_tasks.groupby(['deadline_year','deadline_month']).size()
+		# late_done_tasks_gb = late_done_tasks.groupby(['deadline_year','deadline_month']).size()
+
+		# monthly_late_tasks = late_done_tasks_gb.reset_index()
+		# monthly_on_time_tasks = on_time_done_tasks_gb.reset_index()
+
 
 if choice == "✅ Create Task":
 	st.subheader("Add New Task")
