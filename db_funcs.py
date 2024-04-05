@@ -5,8 +5,8 @@ c = conn.cursor()
 def create_table():
     c.execute('CREATE TABLE IF NOT EXISTS tasks ( title TEXT, tag TEXT, deadline DATETIME, about TEXT, task_status TEXT, time_estimation TEXT, start_time DATETIME, end_time DATETIME, deadline_met BOOL )')
 
-def add_row(title, tag, deadline, deadline_date, about, task_status, time_estimation, start_time, end_time, deadline_met):
-    c.execute('INSERT INTO tasks(title, tag, deadline, deadline_date, about, task_status, time_estimation, start_time, end_time, deadline_met) VALUES (?,?,?,?,?,?,?,?,?,?)',(title, tag, deadline, deadline_date, about, task_status, time_estimation, start_time, end_time, deadline_met))
+def add_row(title, tag, deadline, deadline_date, about, task_status, time_estimation, start_time, end_time, is_late, today_date, avg_mood_int, avg_sleep_hours_int, medication_taken):
+    c.execute('INSERT INTO tasks(title, tag, deadline, deadline_date, about, task_status, time_estimation, start_time, end_time, is_late, today_date, avg_mood_int, avg_sleep_hours_int, medication_taken) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',(title, tag, deadline, deadline_date, about, task_status, time_estimation, start_time, end_time, is_late, today_date, avg_mood_int, avg_sleep_hours_int, medication_taken))
     conn.commit()
     
 def view_all_data():

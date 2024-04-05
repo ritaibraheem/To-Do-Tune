@@ -10,10 +10,19 @@ from model import *
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-
 # *******************************************
 # App Components
 # *******************************************
+
+def disable_mood():
+	st.session_state['feeling_select']=True
+
+def disable_slider():
+	st.session_state['sleep_slider']=True 
+
+def disable_radio():
+	st.session_state['medicine_radio']=True 
+
 
 def color_df(val):
 	if val == "Done":
@@ -31,6 +40,27 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+
+# Initialization state
+if "avg_mood_int" not in st.session_state:
+    st.session_state['avg_mood_int'] = 0
+	
+if "avg_sleep_hours_int" not in st.session_state:
+    st.session_state['avg_sleep_hours_int'] = 0.0
+
+if "medication_taken" not in st.session_state:
+    st.session_state['medication_taken'] = False
+
+if 'feeling_select' not in st.session_state:
+    st.session_state['feeling_select'] = False
+
+if 'sleep_slider' not in st.session_state:
+    st.session_state['sleep_slider'] = False
+
+if 'medicine_radio' not in st.session_state:
+    st.session_state['medicine_radio'] = False
+
 
 st.image('TO DO Tune.svg',)
 
@@ -58,57 +88,59 @@ if choice == "🎯 My Day":
 			</div>
 			"""
 		st.markdown(feeling_html, unsafe_allow_html=True)
-		feeling = None
 
 		col1,col2,col3,col4,col5 = st.columns(5,gap='small')
 		with col1:
-			if st.button('😁'): #super happy
-				feeling = 5
-		with col2:
-			if st.button('🙂'): #happy
-				feeling = 4	
-		with col3:
-			if st.button('😐'): #neutral
-				feeling = 3
-		with col4:
-			if st.button('🙁'): #sad
-				feeling = 2
-		with col5:
-			if st.button('😭'): #super sad
-				feeling = 1
+			if st.button('😁', key='feeling5', on_click=disable_mood, disabled=st.session_state['feeling_select']): #super happy
+				st.session_state['avg_mood_int']=5
 
-		avg_mood_int=feeling
+		with col2:
+			if st.button('🙂', key='feeling4', on_click=disable_mood, disabled=st.session_state['feeling_select']): #happy
+				st.session_state['avg_mood_int']=4
+
+		with col3:
+			if st.button('😐', key='feeling3', on_click=disable_mood, disabled=st.session_state['feeling_select']): #neutral
+				st.session_state['avg_mood_int']=3
+
+		with col4:
+			if st.button('🙁', key='feeling2', on_click=disable_mood, disabled=st.session_state['feeling_select']): #sad
+				st.session_state['avg_mood_int']=2
+
+		with col5:
+			if st.button('😭', key='feeling1', on_click=disable_mood, disabled=st.session_state['feeling_select']): #super sad
+				st.session_state['avg_mood_int']=1
+
 
 	with col_large2:
-		avg_sleep_hours_int = st.slider('How many hours did you sleep at night?', 0.0, 24.0, 7.0, step=0.25)
-		st.write(avg_sleep_hours_int, ' hours.')	
+		st.session_state['avg_sleep_hours_int'] = st.slider('How many hours did you sleep at night?', 0.0, 24.0, step=0.25, key='my_slider', on_change=disable_slider, value=st.session_state['avg_sleep_hours_int'], disabled=st.session_state['sleep_slider'])
+		st.write(st.session_state['avg_sleep_hours_int'], ' hours.')
 
 	with col_large3:
-		res = st.radio('Do you took medicine today?',['Yes', 'No'],index=None)
+		res = st.radio('Do you took medicine today?',['Yes', 'No'], index=st.session_state['medication_taken'], key='my_radio', on_change=disable_radio, disabled=st.session_state['medicine_radio'])
 		if res=='Yes':
-			medication_taken = True
+			st.session_state['medication_taken'] = True
 		else:
-			medication_taken = False
+			st.session_state['medication_taken'] = False
 
 	tab1, tab2, tab3 = st.tabs(["Today's Tasks 📝", "   🔔   ", "Analysis"])
 
 	with tab1:
 		st.text('Do now and live peacefully:')
 		result = get_today_tasks(date.today())
-		result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'is_late'])
+		result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'is_late', 'today_date', 'avg_mood_int', 'avg_sleep_hours_int', 'medication_taken'])
 		clean_df1= result_df[['title', 'tag', 'about', 'task_status', 'deadline_date']]
 		st.dataframe(clean_df1.style.applymap(color_df,subset=['task_status']))
 
 	with tab2:
-		st.header("What to do next? ")
+		st.header("What to do next?")
 		model_result = run_ml_model()
-		st.text(model_result) 
+		st.text(model_result)
 		
 	with tab3:
 		st.header("Your Monthly Behavior")
 		
 		result = view_all_data()
-		result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'is_late'])
+		result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'is_late', 'today_date', 'avg_mood_int', 'avg_sleep_hours_int', 'medication_taken'])
 		
 		done_tasks = result_df[(result_df['task_status']=='Done')]
 		done_tasks['deadline_date']=pd.to_datetime(done_tasks['deadline_date']) 
@@ -166,6 +198,7 @@ if choice == "🎯 My Day":
 
 if choice == "✅ Create Task":
 	st.subheader("Add New Task")
+
 	col1,col2 = st.columns(2)
 
 	with col1:
@@ -193,7 +226,11 @@ if choice == "✅ Create Task":
 		is_late = None
 
 	if st.button("Add Task"):
-		add_row(title, tag, deadline, deadline_date, about, task_status, time_estimation, start_time, end_time, is_late)
+		today_date = date.today()
+		avg_sleep_hours_int = st.session_state['avg_sleep_hours_int']
+		avg_mood_int = st.session_state['avg_mood_int']
+		medication_taken = st.session_state['medication_taken']
+		add_row(title, tag, deadline, deadline_date, about, task_status, time_estimation, start_time, end_time, is_late, today_date, avg_mood_int, avg_sleep_hours_int, medication_taken)
 		st.success("Added Task \"{}\" ✅".format(title))
 		st.balloons()
 
@@ -251,7 +288,7 @@ elif choice == "❌ Delete Task":
 
 elif choice == "📝 All Tasks":
 	result = view_all_data()
-	result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'is_late'])
+	result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'is_late', 'today_date', 'avg_mood_int', 'avg_sleep_hours_int', 'medication_taken'])
 	clean_df= result_df[['title', 'task_status', 'deadline_date']] 
 	task_df = clean_df['task_status'].value_counts().to_frame()
 	task_df = task_df.reset_index()
