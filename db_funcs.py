@@ -61,6 +61,9 @@ def delete_data(task):
     c.execute('DELETE FROM "tasks" WHERE title="{}"'.format(task))
     conn.commit()
 
+def delete_tasls_table(task):
+    c.execute('DELETE FROM "tasks"')
+    conn.commit()
 
 
 #  ****************************************************

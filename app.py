@@ -14,6 +14,47 @@ from plotly.subplots import make_subplots
 # App Components
 # *******************************************
 
+def update_edited_rows(edited_rows_indices, new_rows, deleted_rows, edited_df, result_df):
+	
+	for i in deleted_rows:
+		result_df = result_df.drop(deleted_rows)
+
+	for i in edited_rows_indices:
+		for col in edited_df.columns:
+			result_df.loc[i,col]=edited_df.loc[i,col]
+			
+	return result_df
+
+
+def check_edited_row(edited_row, original_row):
+	# st.write(edited_row)
+	# st.write(original_row)
+	return not edited_row.equals(original_row)
+
+def get_edited_row(edited_df, original_df):
+	edited_indices = edited_df.index
+	edited_indices_list = list(edited_indices)
+
+	original_indices = original_df.index
+	original_indices_list = list(original_indices)	
+
+	edited_rows = []
+	new_rows = []
+	deleted_rows = []
+
+	for i in original_indices:
+		if i not in edited_indices:
+			deleted_rows.append(i)
+
+	for i in edited_indices_list:
+		if i not in original_indices_list:
+			new_rows.append(i)
+
+		if check_edited_row(edited_df.loc[i],original_df.loc[i]):
+			edited_rows.append(i)
+
+	return edited_rows, new_rows, deleted_rows
+
 def disable_mood():
 	st.session_state['feeling_select']=True
 
@@ -68,8 +109,8 @@ if 'res' not in st.session_state:
 st.image('TO DO Tune.svg',)
 
 with st.sidebar:
-	choice = option_menu("Menu", ["🎯 My Day","✅ Create Task","🖊️ Update Task","❌ Delete Task", "📝 Recent Tasks"], 
-									  icons=[' ', ' ',' ', ' ',' '], menu_icon=' ', default_index=0,
+	choice = option_menu("Menu", ["🎯 My Day","✅ Create Task","🖊️ Edit Tasks", "📝 Recent Tasks"], 
+									  icons=[' ', ' ',' ', ' '], menu_icon=' ', default_index=0,
 									  styles={
         "container": {"background-color": "#fafafa"},
 		"nav-link": {"text-align": "left", "margin":"0px", "--hover-color": "#eee", "font-weight": "normal"},
@@ -256,60 +297,97 @@ if choice == "✅ Create Task":
 
 
 
-elif choice == "🖊️ Update Task":
-	st.subheader("Edit Items")
-	with st.expander("Current Data"):
-		result = view_all_data()
-		clean_df = pd.DataFrame(result,columns=["Task","Status","Date"])
-		st.dataframe(clean_df.style.applymap(color_df,subset=['Status']))
+elif choice == "🖊️ Edit Tasks":
+	st.subheader("Update Items")
 
-	list_of_tasks = [i[0] for i in view_all_task_names()]
-	selected_task = st.selectbox("Task",list_of_tasks)
-	task_result = get_task(selected_task)
+	result = view_all_data()
+	result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'is_late', 'today_date', 'avg_mood_int', 'avg_sleep_hours_int', 'medication_taken'])
 
-	if task_result:
-		task = task_result[0][0]
-		task_status = task_result[0][1]
-		task_due_date = task_result[0][2]
+	# with st.expander("View Data"):
+	# 	st.dataframe(result_df.style.applymap(color_df,subset=['task_status']))
 
-		col1,col2 = st.columns(2)
+	original_df = result_df[['title', 'tag', 'deadline_date', 'about', 'task_status']]
+	original_df['deadline_date'] = pd.to_datetime(original_df['deadline_date'])
+	original_df = original_df[(original_df['task_status'] != 'Done')]
+	# original_df = original_df.style.applymap(color_df,subset=['task_status'])
+	edited_df = st.data_editor(original_df, hide_index=True, use_container_width=True, num_rows="dynamic",
+							column_config={
+								'tag' : st.column_config.SelectboxColumn(
+									"tag",
+									options=["home", "bureaucracy", "studies", "work", "exercise", "fun", "health"],
+									required=True,
+								),
+								'task_status' : st.column_config.SelectboxColumn(
+									"task_status",
+									options=["To-Do","In-Progress","Done"],
+									required=True,
+								),
+								'deadline_date' : st.column_config.DateColumn(
+									"deadline_date",
+									min_value=date(1900, 1, 1),
+									max_value=date(2005, 1, 1),
+									format="DD/MM/YYYY",
+									step=1,
+								),
+							},)
+	st.dataframe(edited_df)
 
-		with col1:
-			new_task = st.text_area("Task To Do",task)
+	edited_rows_indices, new_rows, deleted_rows = get_edited_row(edited_df, original_df)
 
-		with col2:
-			new_task_status = st.selectbox(task_status,["To-Do","In-Progress","Done"])
-			new_task_due_date = st.date_input(task_due_date)
-
-		if st.button("🖊️ Update Task"):
-			edit_task_data(new_task,new_task_status,new_task_due_date,task,task_status,task_due_date)
-			st.success("Updated Task \"{}\" ✅".format(task,new_task))
-
-		with st.expander("View Updated Data 💫"):
-			result = view_all_data()
-			clean_df = pd.DataFrame(result,columns=["Task","Status","Date"])
-			st.dataframe(clean_df.style.applymap(color_df,subset=['Status']))
+	edited_result_df = update_edited_rows(edited_rows_indices, new_rows, deleted_rows, edited_df, result_df)
+	st.write(edited_result_df)
 
 
 
 
-elif choice == "❌ Delete Task":
-	st.subheader("Delete")
-	with st.expander("View Data"):
-		result = view_all_data()
-		result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'is_late', 'today_date', 'avg_mood_int', 'avg_sleep_hours_int', 'medication_taken'])
-		st.dataframe(result_df.style.applymap(color_df,subset=['task_status']))
 
-	unique_list = [i[0] for i in view_all_task_names()]
-	delete_by_task_name =  st.selectbox("Select Task",unique_list)
-	if st.button("Delete ❌"):
-		delete_data(delete_by_task_name)
-		st.warning("Deleted Task \"{}\" ✅".format(delete_by_task_name))
+	# list_of_tasks = [i[0] for i in view_all_task_names()]
+	# selected_task = st.selectbox("Task",list_of_tasks)
+	# task_result = get_task(selected_task)
 
-	with st.expander("View Updated Data 💫"):
-		result = view_all_data()
-		clean_df = pd.DataFrame(result,columns=["Task","Status","Date"])
-		st.dataframe(clean_df.style.applymap(color_df,subset=['Status']))
+	# if task_result:
+	# 	task = task_result[0][0]
+	# 	task_status = task_result[0][1]
+	# 	task_due_date = task_result[0][2]
+
+	# 	col1,col2 = st.columns(2)
+
+	# 	with col1:
+	# 		new_task = st.text_area("Task To Do",task)
+
+	# 	with col2:
+	# 		new_task_status = st.selectbox(task_status,["To-Do","In-Progress","Done"])
+	# 		new_task_due_date = st.date_input(task_due_date)
+
+	# 	if st.button("Update"):
+	# 		edit_task_data(new_task,new_task_status,new_task_due_date,task,task_status,task_due_date)
+	# 		st.success("Updated Task \"{}\" ✅".format(task,new_task))
+
+	# 	with st.expander("View Updated Data 💫"):
+	# 		result = view_all_data()
+	# 		clean_df = pd.DataFrame(result,columns=["Task","Status","Date"])
+	# 		st.dataframe(clean_df.style.applymap(color_df,subset=['Status']))
+
+
+
+
+# elif choice == "❌ Delete Task":
+# 	st.subheader("Delete")
+# 	with st.expander("View Data"):
+# 		result = view_all_data()
+# 		result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'is_late', 'today_date', 'avg_mood_int', 'avg_sleep_hours_int', 'medication_taken'])
+# 		st.dataframe(result_df.style.applymap(color_df,subset=['task_status']))
+
+# 	unique_list = [i[0] for i in view_all_task_names()]
+# 	delete_by_task_name =  st.selectbox("Select Task",unique_list)
+# 	if st.button("Delete ❌"):
+# 		delete_data(delete_by_task_name)
+# 		st.warning("Deleted Task \"{}\" ✅".format(delete_by_task_name))
+
+# 	with st.expander("View Updated Data 💫"):
+# 		result = view_all_data()
+# 		clean_df = pd.DataFrame(result,columns=["Task","Status","Date"])
+# 		st.dataframe(clean_df.style.applymap(color_df,subset=['Status']))
 
 
 
