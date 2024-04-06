@@ -61,6 +61,9 @@ if 'sleep_slider' not in st.session_state:
 if 'medicine_radio' not in st.session_state:
     st.session_state['medicine_radio'] = False
 
+if 'res' not in st.session_state:
+    st.session_state['res'] = None
+
 
 st.image('TO DO Tune.svg',)
 
@@ -116,27 +119,29 @@ if choice == "🎯 My Day":
 		st.write(st.session_state['avg_sleep_hours_int'], ' hours.')
 
 	with col_large3:
-		res = st.radio('Do you took medicine today?',['Yes', 'No'], index=st.session_state['medication_taken'], key='my_radio', on_change=disable_radio, disabled=st.session_state['medicine_radio'])
+		res = st.radio('Do you took medicine today?',['Yes', 'No'], index=st.session_state['res'], key='my_radio', on_change=disable_radio, disabled=st.session_state['medicine_radio'])
 		if res=='Yes':
 			st.session_state['medication_taken'] = True
-		else:
+			st.session_state['res'] = 0
+		if res=='No':
 			st.session_state['medication_taken'] = False
+			st.session_state['res'] = 1
 
-	tab1, tab2, tab3 = st.tabs(["Today's Tasks 📝", "   🔔   ", "Analysis"])
+	tab1, tab2, tab3 = st.tabs(["Today's Tasks 📝", "   Analysis   ", "   🔔   "])
 
 	with tab1:
 		st.text('Do now and live peacefully:')
-		result = get_today_tasks(date.today())
+		result = view_all_data()
 		result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'is_late', 'today_date', 'avg_mood_int', 'avg_sleep_hours_int', 'medication_taken'])
+		# result = get_today_tasks(date.today())
+		# result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'is_late', 'today_date', 'avg_mood_int', 'avg_sleep_hours_int', 'medication_taken'])
+		result_df['deadline_date']=pd.to_datetime(result_df['deadline_date'])
 		clean_df1= result_df[['title', 'tag', 'about', 'task_status', 'deadline_date']]
+		clean_df1['deadline_date'] = result_df['deadline_date'].dt.strftime('%m/%d/%Y')
+		clean_df1 = clean_df1[(clean_df1['deadline_date']==date.today().strftime('%m/%d/%Y'))]
 		st.dataframe(clean_df1.style.applymap(color_df,subset=['task_status']))
-
-	with tab2:
-		st.header("What to do next?")
-		model_result = run_ml_model()
-		st.text(model_result)
 		
-	with tab3:
+	with tab2:
 		st.header("Your Monthly Behavior")
 		
 		result = view_all_data()
@@ -159,7 +164,6 @@ if choice == "🎯 My Day":
 		trace0 = go.Histogram(x=late_done_tasks['deadline_date'],
 							name='Lated Tasks',
 							xbins=dict(
-							start='2023-11-01',
 							end=str(one_month_later),
 							size= 'M1'), # 1 months
 							autobinx = False
@@ -168,7 +172,6 @@ if choice == "🎯 My Day":
 		trace1 = go.Histogram(x=on_time_done_tasks['deadline_date'],
 							name='On-Time Tasks',
 							xbins=dict(
-							start='2023-11-01',
 							end=str(one_month_later),
 							size= 'M1'), # 1 months
 							autobinx = False
@@ -194,6 +197,11 @@ if choice == "🎯 My Day":
 
 		# monthly_late_tasks = late_done_tasks_gb.reset_index()
 		# monthly_on_time_tasks = on_time_done_tasks_gb.reset_index()
+  
+	with tab3:
+		st.header("What to do next?")
+		model_result = run_ml_model()
+		st.text(model_result)
 
 
 if choice == "✅ Create Task":
