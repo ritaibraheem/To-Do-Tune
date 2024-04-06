@@ -68,7 +68,7 @@ if 'res' not in st.session_state:
 st.image('TO DO Tune.svg',)
 
 with st.sidebar:
-	choice = option_menu("Menu", ["🎯 My Day","✅ Create Task","🖊️ Update Task","❌ Delete Task", "📝 All Tasks"], 
+	choice = option_menu("Menu", ["🎯 My Day","✅ Create Task","🖊️ Update Task","❌ Delete Task", "📝 Recent Tasks"], 
 									  icons=[' ', ' ',' ', ' ',' '], menu_icon=' ', default_index=0,
 									  styles={
         "container": {"background-color": "#fafafa"},
@@ -145,7 +145,7 @@ if choice == "🎯 My Day":
 		st.dataframe(clean_df1.style.applymap(color_df,subset=['task_status']))
 		
 	with tab2:
-		st.header("Your Monthly Behavior")
+		st.subheader("Tasks Status Tracker")
 		
 		result = view_all_data()
 		result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'is_late', 'today_date', 'avg_mood_int', 'avg_sleep_hours_int', 'medication_taken'])
@@ -164,7 +164,7 @@ if choice == "🎯 My Day":
 
 		fig = make_subplots(rows=1, cols=2)
 
-		trace0 = go.Histogram(x=late_done_tasks['deadline_date'],
+		trace0 = go.Histogram(x=late_done_tasks['deadline_date'], 
 							name='Lated Tasks',
 							xbins=dict(
 							end=str(one_month_later),
@@ -183,7 +183,7 @@ if choice == "🎯 My Day":
 		fig.append_trace(trace0, 1, 1)
 		fig.append_trace(trace1, 1, 2)
 
-		fig.update_layout(title = {"text": "Completed Tasks Distribution Over The Time","x": 0.4, })
+		fig.update_layout(title = {"text": "Completed Tasks Distribution Over The Time","x": 0.3, })
 
 		st.plotly_chart(fig,use_container_width=True)
 
@@ -202,16 +202,15 @@ if choice == "🎯 My Day":
 		# monthly_on_time_tasks = on_time_done_tasks_gb.reset_index()
   
 	with tab3:
-		st.header("What to do next?")
+		st.subheader("What to do next?")
 		model_result = run_ml_model()
-		st.text(model_result)
 
-		title = model_result['title']
-		tag = model_result['tag']
+		title = model_result['title'].values[0]
+		# title = str(title)
+		tag = model_result['tag'].values[0]
+		# tag = str(tag)
 
-		st.text("Don't let time tick away! Dive into your HW2 task now.")
-
-
+		st.text('It seems you are considering delaying the "' + title + '"  task under the "' + tag + '" category!')
 
 
 if choice == "✅ Create Task":
@@ -250,8 +249,9 @@ if choice == "✅ Create Task":
 		avg_mood_int = st.session_state['avg_mood_int']
 		medication_taken = st.session_state['medication_taken']
 		add_row(title, tag, deadline, deadline_date, about, task_status, time_estimation, start_time, end_time, is_late, today_date, avg_mood_int, avg_sleep_hours_int, medication_taken)
-		st.success("Added Task \"{}\" ✅".format(title))
-		st.balloons()
+		# st.success("Added Task \"{}\" ✅".format(title))
+		# st.balloons()
+		st.toast("Added Task \"{}\" ✅".format(title))
 
 
 
@@ -297,8 +297,8 @@ elif choice == "❌ Delete Task":
 	st.subheader("Delete")
 	with st.expander("View Data"):
 		result = view_all_data()
-		clean_df = pd.DataFrame(result,columns=["Task","Status","Date"])
-		st.dataframe(clean_df.style.applymap(color_df,subset=['Status']))
+		result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'is_late', 'today_date', 'avg_mood_int', 'avg_sleep_hours_int', 'medication_taken'])
+		st.dataframe(result_df.style.applymap(color_df,subset=['task_status']))
 
 	unique_list = [i[0] for i in view_all_task_names()]
 	delete_by_task_name =  st.selectbox("Select Task",unique_list)
@@ -314,23 +314,38 @@ elif choice == "❌ Delete Task":
 
 
 
-elif choice == "📝 All Tasks":
+elif choice == "📝 Recent Tasks":
+	st.subheader("Don't let time tick away this month! Dive into your tasks now.")
 	result = view_all_data()
 	result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'is_late', 'today_date', 'avg_mood_int', 'avg_sleep_hours_int', 'medication_taken'])
-	clean_df= result_df[['title', 'task_status', 'deadline_date']] 
-	task_df = clean_df['task_status'].value_counts().to_frame()
-	task_df = task_df.reset_index()
+	
+	# clean_df= result_df[['title', 'task_status', 'deadline_date']] 
+	# task_df = clean_df['task_status'].value_counts().to_frame()
+	# task_df = task_df.reset_index()
 
 	col1,col2 = st.columns(2)
 	with col1:
+		clean_df = result_df[['title', 'tag', 'task_status', 'deadline_date']]
+		clean_df['deadline_date'] = pd.to_datetime(clean_df['deadline_date'])
+		clean_df = clean_df[((clean_df['deadline_date'].dt.month == datetime.now().month) & (clean_df['deadline_date'].dt.year == datetime.now().year)) | (clean_df['task_status'] != 'Done')]
+		
+		task_df = clean_df['task_status'].value_counts().to_frame()
+		task_df = task_df.reset_index()
+		
 		st.dataframe(task_df)
+		st.dataframe(clean_df.style.applymap(color_df,subset=['task_status']))	
+	
 	with col2:
 		p1 = px.pie(task_df,names='task_status',values='count', color='task_status', color_discrete_map={'To-Do':'red', 'Done':'green', 'In-Progress':'orange'})
 		st.plotly_chart(p1,use_container_width=True)
 
+	# clean_df1 = result_df[['title', 'tag', 'task_status', 'deadline_date']]
+	# clean_df1['deadline_date'] = pd.to_datetime(clean_df1['deadline_date'])
+	# clean_df1 = clean_df1[((clean_df1['deadline_date'].dt.month == datetime.now().month) & (clean_df1['deadline_date'].dt.year == datetime.now().year)) | (clean_df1['task_status'] != 'Done')]
+	# st.dataframe(clean_df1.style.applymap(color_df,subset=['task_status']))	
+
 	with st.expander("View All 📝"):
 		clean_df1 = result_df[['title', 'tag', 'task_status', 'deadline_date']]
 		clean_df1['deadline_date'] = pd.to_datetime(clean_df1['deadline_date'])
-		clean_df1['deadline_date'] = clean_df1['deadline_date'].dt.date
 		st.dataframe(clean_df1.style.applymap(color_df,subset=['task_status']))
 
