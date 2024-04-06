@@ -43,7 +43,7 @@ def get_task(task):
     return data
 
 def get_today_tasks(deadline_date):
-    c.execute('SELECT * FROM "tasks" WHERE deadline_date="{}"'(deadline_date.strftime('%m/%d/%Y')))
+    c.execute('SELECT * FROM "tasks" WHERE deadline_date="{}"'.format(deadline_date))
     data = c.fetchall()
     return data
               

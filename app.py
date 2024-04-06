@@ -131,14 +131,17 @@ if choice == "🎯 My Day":
 
 	with tab1:
 		st.text('Do now and live peacefully:')
-		result = view_all_data()
-		result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'is_late', 'today_date', 'avg_mood_int', 'avg_sleep_hours_int', 'medication_taken'])
-		# result = get_today_tasks(date.today())
+		# result = view_all_data()
 		# result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'is_late', 'today_date', 'avg_mood_int', 'avg_sleep_hours_int', 'medication_taken'])
-		result_df['deadline_date']=pd.to_datetime(result_df['deadline_date'])
+		# result_df['deadline_date']=pd.to_datetime(result_df['deadline_date'])
+		# clean_df1= result_df[['title', 'tag', 'about', 'task_status', 'deadline_date']]
+		# clean_df1['deadline_date'] = result_df['deadline_date'].dt.strftime('%m/%d/%Y')
+		# clean_df1 = clean_df1[(clean_df1['deadline_date']==date.today().strftime('%m/%d/%Y'))]
+		# st.dataframe(clean_df1.style.applymap(color_df,subset=['task_status']))
+
+		result = get_today_tasks(date.today().strftime('%m/%d/%Y'))
+		result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'is_late', 'today_date', 'avg_mood_int', 'avg_sleep_hours_int', 'medication_taken'])
 		clean_df1= result_df[['title', 'tag', 'about', 'task_status', 'deadline_date']]
-		clean_df1['deadline_date'] = result_df['deadline_date'].dt.strftime('%m/%d/%Y')
-		clean_df1 = clean_df1[(clean_df1['deadline_date']==date.today().strftime('%m/%d/%Y'))]
 		st.dataframe(clean_df1.style.applymap(color_df,subset=['task_status']))
 		
 	with tab2:
@@ -203,6 +206,13 @@ if choice == "🎯 My Day":
 		model_result = run_ml_model()
 		st.text(model_result)
 
+		title = model_result['title']
+		tag = model_result['tag']
+
+		st.text("Don't let time tick away! Dive into your HW2 task now.")
+
+
+
 
 if choice == "✅ Create Task":
 	st.subheader("Add New Task")
@@ -216,16 +226,17 @@ if choice == "✅ Create Task":
 	with col2:
 		tag = st.selectbox("Category",["home", "bureaucracy", "studies", "work", "exercise", "fun", "health"])
 		deadline_date = st.date_input("Due Date")
-		deadline = datetime.combine(deadline_date, datetime.max.time())
+		deadline_date = deadline_date.strftime('%m/%d/%Y')
+		deadline = deadline_date + ' 11:59:59 PM'
 		time_estimation = st.number_input(label="Estimated Time (hours)", min_value=0,)
 		task_status = st.selectbox("Status",["To-Do","In-Progress"])
 
 	if task_status == "In-Progress":
-			start_time=datetime.now()
+			start_time=datetime.now().strftime("%m/%d/%Y %I:%M:%S %p")
 	else: start_time=None
 
 	if task_status == "Done":
-			end_time=datetime.now()
+			end_time=datetime.now().strftime("%m/%d/%Y %I:%M:%S %p")
 			if deadline < end_time:
 				is_late = True 
 			else: is_late = False
@@ -234,13 +245,16 @@ if choice == "✅ Create Task":
 		is_late = None
 
 	if st.button("Add Task"):
-		today_date = date.today()
+		today_date = date.today().strftime('%m/%d/%Y')
 		avg_sleep_hours_int = st.session_state['avg_sleep_hours_int']
 		avg_mood_int = st.session_state['avg_mood_int']
 		medication_taken = st.session_state['medication_taken']
 		add_row(title, tag, deadline, deadline_date, about, task_status, time_estimation, start_time, end_time, is_late, today_date, avg_mood_int, avg_sleep_hours_int, medication_taken)
 		st.success("Added Task \"{}\" ✅".format(title))
 		st.balloons()
+
+
+
 
 elif choice == "🖊️ Update Task":
 	st.subheader("Edit Items")
@@ -276,6 +290,9 @@ elif choice == "🖊️ Update Task":
 			clean_df = pd.DataFrame(result,columns=["Task","Status","Date"])
 			st.dataframe(clean_df.style.applymap(color_df,subset=['Status']))
 
+
+
+
 elif choice == "❌ Delete Task":
 	st.subheader("Delete")
 	with st.expander("View Data"):
@@ -294,6 +311,9 @@ elif choice == "❌ Delete Task":
 		clean_df = pd.DataFrame(result,columns=["Task","Status","Date"])
 		st.dataframe(clean_df.style.applymap(color_df,subset=['Status']))
 
+
+
+
 elif choice == "📝 All Tasks":
 	result = view_all_data()
 	result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'is_late', 'today_date', 'avg_mood_int', 'avg_sleep_hours_int', 'medication_taken'])
@@ -309,6 +329,8 @@ elif choice == "📝 All Tasks":
 		st.plotly_chart(p1,use_container_width=True)
 
 	with st.expander("View All 📝"):
-		clean_df1= result_df[['title', 'tag', 'task_status', 'deadline_date']]
+		clean_df1 = result_df[['title', 'tag', 'task_status', 'deadline_date']]
+		clean_df1['deadline_date'] = pd.to_datetime(clean_df1['deadline_date'])
+		clean_df1['deadline_date'] = clean_df1['deadline_date'].dt.date
 		st.dataframe(clean_df1.style.applymap(color_df,subset=['task_status']))
 
