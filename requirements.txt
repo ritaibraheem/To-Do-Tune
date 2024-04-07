@@ -70,7 +70,7 @@ Send2Trash==1.8.0
 six==1.16.0
 sklearn-pandas==2.2.0
 smmap==5.0.0
-streamlit==1.5.1
+streamlit==1.32.2
 streamlit_option_menu==0.3.12
 tenacity==8.0.1
 terminado==0.13.1
