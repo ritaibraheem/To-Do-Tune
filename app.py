@@ -502,7 +502,7 @@ elif choice == "📝 Recent Tasks":
 		task_df = clean_df['task_status'].value_counts().to_frame()
 		task_df = task_df.reset_index()
 		
-		# st.dataframe(task_df)
+		st.dataframe(task_df)
 		st.dataframe(clean_df.style.applymap(color_df,subset=['task_status']))	
 	
 	with col2:
