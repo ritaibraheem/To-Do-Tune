@@ -504,7 +504,6 @@ elif choice == "📝 Recent Tasks":
 
 		task_df.rename(columns={"index": "Status", "task_status": "Count"}, inplace=True)
 		
-		st.dataframe(task_df)
 		st.dataframe(clean_df.style.applymap(color_df,subset=['task_status']))	
 	
 	with col2:
