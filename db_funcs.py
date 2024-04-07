@@ -61,10 +61,21 @@ def delete_data(task):
     c.execute('DELETE FROM "tasks" WHERE title="{}"'.format(task))
     conn.commit()
 
-def delete_tasls_table(task):
-    c.execute('DELETE FROM "tasks"')
+def delete_row_by_guid(guid):
+    c.execute('DELETE FROM "tasks" WHERE guid=?', (guid,))
     conn.commit()
 
+# def delete_row_by_guid(guid):
+#     c.execute('DELETE FROM "tasks" WHERE guid="{}"'.format(guid))
+#     conn.commit()
+
+# def delete_row_by_guid(index):
+#     c.execute('DELETE FROM "tasks" WHERE rowid = ? ;', (index,))
+#     conn.commit()
+
+def delete_tasks_table():
+    c.execute('DELETE FROM "tasks"')
+    conn.commit()
 
 #  ****************************************************
 #  ML Model Functions   

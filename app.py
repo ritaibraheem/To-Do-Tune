@@ -19,11 +19,27 @@ def update_edited_rows(edited_rows_indices, new_rows, deleted_rows, edited_df, r
 	for i in deleted_rows:
 		result_df = result_df.drop(deleted_rows)
 
+	to_edit_df = result_df.loc[edited_rows_indices]
 	for i in edited_rows_indices:
 		for col in edited_df.columns:
-			result_df.loc[i,col]=edited_df.loc[i,col]
-			
-	return result_df
+			if to_edit_df.loc[i,col] != edited_df.loc[i,col]:
+				# st.write(to_edit_df.loc[i,col])
+				# st.write(edited_df.loc[i,col])
+				to_edit_df.loc[i,col] = edited_df.loc[i,col]
+				# st.write(to_edit_df.loc[i,col])
+				if col == 'task_status':
+				
+					if edited_df.loc[i,col] == 'In-Progress':
+						edited_df.loc[i,'start_time'] = datetime.now().strftime("%m/%d/%Y %I:%M:%S %p")
+					
+					if edited_df.loc[i,col] == 'Done':
+						edited_df.loc[i,'end_time']=datetime.now().strftime("%m/%d/%Y %I:%M:%S %p")
+						if edited_df.loc[i,'deadline'] < edited_df.loc[i,'end_time']:
+							edited_df.loc[i,'is_late'] = True 
+						else: edited_df.loc[i,'is_late'] = False
+
+		
+	return to_edit_df
 
 
 def check_edited_row(edited_row, original_row):
@@ -302,12 +318,16 @@ elif choice == "🖊️ Edit Tasks":
 
 	result = view_all_data()
 	result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'is_late', 'today_date', 'avg_mood_int', 'avg_sleep_hours_int', 'medication_taken'])
+	result_df['deadline_date'] = pd.to_datetime(result_df['deadline_date'])
+	result_df['deadline_date'] = result_df['deadline_date'].dt.date
 
 	# with st.expander("View Data"):
 	# 	st.dataframe(result_df.style.applymap(color_df,subset=['task_status']))
 
 	original_df = result_df[['title', 'tag', 'deadline_date', 'about', 'task_status']]
-	original_df['deadline_date'] = pd.to_datetime(original_df['deadline_date'])
+	# original_df['deadline_date'] = pd.to_datetime(original_df['deadline_date'])
+	# original_df['deadline_date'] = original_df['deadline_date'].dt.date
+	# original_df['deadline_date'] = original_df['deadline_date'].dt.strftime('%m/%d/%Y')
 	original_df = original_df[(original_df['task_status'] != 'Done')]
 	# original_df = original_df.style.applymap(color_df,subset=['task_status'])
 	edited_df = st.data_editor(original_df, hide_index=True, use_container_width=True, num_rows="dynamic",
@@ -326,16 +346,79 @@ elif choice == "🖊️ Edit Tasks":
 									"deadline_date",
 									min_value=date(1900, 1, 1),
 									max_value=date(2005, 1, 1),
-									format="DD/MM/YYYY",
 									step=1,
 								),
 							},)
-	st.dataframe(edited_df)
+	
+	# edited_df.compare(original_df)
+	# st.dataframe(edited_df)
+	# st.dataframe(original_df)
 
 	edited_rows_indices, new_rows, deleted_rows = get_edited_row(edited_df, original_df)
 
-	edited_result_df = update_edited_rows(edited_rows_indices, new_rows, deleted_rows, edited_df, result_df)
-	st.write(edited_result_df)
+	# st.write(deleted_rows)
+
+	if original_df.shape[0]!=edited_df.shape[0]:
+		for i in deleted_rows:
+			guid = result_df.loc[i]['guid']
+			# st.write(guid)
+			delete_row_by_guid(int(guid))
+
+	# st.dataframe(edited_df)
+	# st.dataframe(original_df)
+
+	original_df = original_df.drop(deleted_rows)
+	# st.dataframe(original_df)
+	diff_df = edited_df.compare(original_df)
+
+	if (not diff_df.empty):
+		# st.dataframe(diff_df)
+
+		edited_df['deadline_date'] = pd.to_datetime(edited_df['deadline_date'])
+		edited_df['deadline_date'] = edited_df['deadline_date'].dt.date
+		# edited_df['deadline_date'] = edited_df['deadline_date'].dt.strftime('%m/%d/%Y')
+
+		# st.dataframe(edited_df)
+		# st.dataframe(original_df)
+
+		# edited_rows_indices, new_rows, deleted_rows = get_edited_row(edited_df, original_df)
+
+		edited_result_df = update_edited_rows(edited_rows_indices, new_rows, deleted_rows, edited_df, result_df)
+		# edited_result_df['deadline_date'] = pd.to_datetime(edited_result_df['deadline_date'])
+		# edited_result_df['deadline_date'] = edited_result_df['deadline_date'].dt.date
+		# st.dataframe(edited_result_df)
+		
+		# st.dataframe(edited_result_df)
+
+		if not edited_result_df.empty:
+			for i in edited_rows_indices:
+				delete_row_by_guid(i)
+
+			for i in edited_rows_indices:
+				title = edited_result_df.loc[i]['title']
+				tag = edited_result_df.loc[i]['tag']
+				deadline = edited_result_df.loc[i]['deadline']
+				deadline_date = edited_result_df.loc[i]['deadline_date']
+				deadline_date = deadline_date.strftime('%m/%d/%Y')
+				about = edited_result_df.loc[i]['about']
+				task_status = edited_result_df.loc[i]['task_status']
+				time_estimation = edited_result_df.loc[i]['time_estimation']
+				start_time = edited_result_df.loc[i]['start_time']
+				end_time = edited_result_df.loc[i]['end_time']
+				is_late = edited_result_df.loc[i]['is_late']
+				today_date = edited_result_df.loc[i]['today_date']
+				avg_mood_int = edited_result_df.loc[i]['avg_mood_int']
+				avg_sleep_hours_int = edited_result_df.loc[i]['avg_sleep_hours_int']
+				medication_taken = edited_result_df.loc[i]['medication_taken']
+
+				add_row(title, tag, deadline, deadline_date, about, task_status, time_estimation, start_time, end_time, is_late, today_date, avg_mood_int, avg_sleep_hours_int, medication_taken)
+
+		# result = view_all_data()
+		# result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'is_late', 'today_date', 'avg_mood_int', 'avg_sleep_hours_int', 'medication_taken'])
+		# st.dataframe(result_df)
+
+	# st.dataframe(edited_df)
+
 
 
 
