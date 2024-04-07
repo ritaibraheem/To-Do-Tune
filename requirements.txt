@@ -72,7 +72,7 @@ sklearn-pandas==2.2.0
 smmap==5.0.0
 streamlit==1.32.2
 streamlit_option_menu==0.3.12
-tenacity==8.0.1
+tenacity>=8.1.0,<9
 terminado==0.13.1
 testpath==0.5.0
 toml==0.10.2
