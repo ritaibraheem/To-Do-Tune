@@ -311,9 +311,9 @@ if choice == "✅ Create Task":
 		avg_mood_int = st.session_state['avg_mood_int']
 		medication_taken = st.session_state['medication_taken']
 		add_row(title, tag, deadline, deadline_date, about, task_status, time_estimation, start_time, end_time, is_late, today_date, avg_mood_int, avg_sleep_hours_int, medication_taken)
-		# st.success("Added Task \"{}\" ✅".format(title))
-		# st.balloons()
-		st.toast("Added Task \"{}\" ✅".format(title))
+		st.success("Added Task \"{}\" ✅".format(title))
+		st.balloons()
+		# st.toast("Added Task \"{}\" ✅".format(title))
 
 
 
