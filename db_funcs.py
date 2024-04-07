@@ -17,9 +17,9 @@ def create_table():
 	"end_time"	DATETIME,
 	"is_late"	NUMERIC,
 	"today_date"	DATE,
-	"medication_taken"	NUMERIC,
 	"avg_mood_int"	INTEGER,
 	"avg_sleep_hours_int"	REAL,
+	"medication_taken"	NUMERIC,
 	PRIMARY KEY("guid" AUTOINCREMENT)
 );''')
 

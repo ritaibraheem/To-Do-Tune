@@ -30,13 +30,15 @@ def update_edited_rows(edited_rows_indices, new_rows, deleted_rows, edited_df, r
 				if col == 'task_status':
 				
 					if edited_df.loc[i,col] == 'In-Progress':
-						edited_df.loc[i,'start_time'] = datetime.now().strftime("%m/%d/%Y %I:%M:%S %p")
+						to_edit_df.loc[i,'start_time'] = datetime.now().strftime("%m/%d/%Y %I:%M:%S %p")
 					
 					if edited_df.loc[i,col] == 'Done':
-						edited_df.loc[i,'end_time']=datetime.now().strftime("%m/%d/%Y %I:%M:%S %p")
-						if edited_df.loc[i,'deadline'] < edited_df.loc[i,'end_time']:
-							edited_df.loc[i,'is_late'] = True 
-						else: edited_df.loc[i,'is_late'] = False
+						to_edit_df.loc[i,'end_time']=datetime.now().strftime("%m/%d/%Y %I:%M:%S %p")
+						# st.write(to_edit_df.loc[i,'end_time'])
+						# st.write(edited_df.loc[i,'deadline_date'])
+						if edited_df.loc[i,'deadline_date'] < date.today():
+							to_edit_df.loc[i,'is_late'] = True 
+						else: to_edit_df.loc[i,'is_late'] = False
 
 		
 	return to_edit_df
@@ -97,6 +99,9 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+top_image = Image.open('static/user.jpeg')
+st.sidebar.image(top_image,use_column_width='auto')
 
 
 # Initialization state
@@ -364,8 +369,7 @@ elif choice == "🖊️ Edit Tasks":
 			# st.write(guid)
 			delete_row_by_guid(int(guid))
 
-	# st.dataframe(edited_df)
-	# st.dataframe(original_df)
+
 
 	original_df = original_df.drop(deleted_rows)
 	# st.dataframe(original_df)
@@ -392,8 +396,10 @@ elif choice == "🖊️ Edit Tasks":
 
 		if not edited_result_df.empty:
 			for i in edited_rows_indices:
-				delete_row_by_guid(i)
-
+				guid = result_df.loc[i]['guid']
+				delete_row_by_guid(int(guid))
+			
+			# st.dataframe(edited_result_df)
 			for i in edited_rows_indices:
 				title = edited_result_df.loc[i]['title']
 				tag = edited_result_df.loc[i]['tag']
@@ -410,8 +416,11 @@ elif choice == "🖊️ Edit Tasks":
 				avg_mood_int = edited_result_df.loc[i]['avg_mood_int']
 				avg_sleep_hours_int = edited_result_df.loc[i]['avg_sleep_hours_int']
 				medication_taken = edited_result_df.loc[i]['medication_taken']
+				# st.write(type(avg_mood_int),type(avg_sleep_hours_int),type(medication_taken))
 
-				add_row(title, tag, deadline, deadline_date, about, task_status, time_estimation, start_time, end_time, is_late, today_date, avg_mood_int, avg_sleep_hours_int, medication_taken)
+				# st.write(title, tag, deadline, deadline_date, about, task_status, time_estimation, start_time, end_time, is_late, today_date, int(avg_mood_int), float(avg_sleep_hours_int), bool(medication_taken))
+
+				add_row(title, tag, deadline, deadline_date, about, task_status, time_estimation, start_time, end_time, is_late, today_date, int(avg_mood_int), float(avg_sleep_hours_int), bool(medication_taken))
 
 		# result = view_all_data()
 		# result_df = pd.DataFrame(result,columns=['guid', 'title', 'tag', 'deadline', 'deadline_date', 'about', 'task_status', 'time_estimation', 'start_time', 'end_time', 'is_late', 'today_date', 'avg_mood_int', 'avg_sleep_hours_int', 'medication_taken'])
