@@ -221,7 +221,22 @@ if choice == "🎯 My Day":
 		late_done_tasks = done_tasks[(done_tasks['is_late']==1)]
 		on_time_done_tasks = done_tasks[(done_tasks['is_late']==0)]
 
-		
+		late_done_tasks['deadline_month'] = late_done_tasks['deadline_date'].dt.month
+		late_done_tasks['end_month'] = late_done_tasks['end_time'].dt.month
+		late_done_tasks['deadline_year'] = late_done_tasks['deadline_date'].dt.year
+
+		on_time_done_tasks['deadline_month'] = on_time_done_tasks['deadline_date'].dt.month
+		on_time_done_tasks['end_month'] = on_time_done_tasks['end_time'].dt.month
+		on_time_done_tasks['deadline_year'] = on_time_done_tasks['deadline_date'].dt.year
+
+		on_time_done_tasks_gb = on_time_done_tasks.groupby(['deadline_year','deadline_month']).size()
+		late_done_tasks_gb = late_done_tasks.groupby(['deadline_year','deadline_month']).size()
+
+		max_month_late_done_tasks_gb = late_done_tasks_gb.max()
+		max_month_on_time_done_tasks_gb = on_time_done_tasks_gb.max()
+
+		max_y_value = max(max_month_late_done_tasks_gb, max_month_late_done_tasks_gb)
+	
 		one_month_later = date.today() + relativedelta(months=2)
 
 		fig = make_subplots(rows=1, cols=2)
@@ -246,6 +261,7 @@ if choice == "🎯 My Day":
 		fig.append_trace(trace1, 1, 2)
 
 		fig.update_layout(title = {"text": "Completed Tasks Distribution Over The Time","x": 0.3, })
+		fig.update_yaxes(range=[0, max_y_value + 1])
 
 		st.plotly_chart(fig,use_container_width=True)
 
